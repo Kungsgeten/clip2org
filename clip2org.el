@@ -226,8 +226,14 @@ Returns nil if there is no data for last run."
            (clip2org--is-bookmark clip))
 
       (and last-run-ts (time-less-p
-                        (org-read-date t t (cdr  (assoc 'date clip)))
+                        (clip2org--parse-datetime (cdr (assoc 'date clip)))
                         last-run-ts))))
+
+(defun clip2org--parse-datetime (datetime)
+  "Parse datetime for a clipping. The format is like this:
+- Monday, July 8, 2019 11:15:29 PM
+- Tuesday, July 9, 2019 6:48:34 AM"
+  (org-read-date t t datetime))
 
 (defun clip2org (&optional all clipping-file)
   "Parse clippings and convert to org headlines.
