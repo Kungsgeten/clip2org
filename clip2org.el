@@ -161,15 +161,8 @@ clip2org-include-pdf-folder."
                   (date (cdr (assoc 'date item)))
                   (content (cdr (assoc 'content item))))
 
-              (if (not is-highlight)
-                  (insert "\n** " content "\n")
-                (insert "\n** ")
-                (when page
-                  (insert "Page " page " "))
-                (when loc
-                  (insert "Location " loc " "))
-                (insert "\n   " content "\n")
-                (fill-paragraph))
+              (insert "\n- " content)
+              (fill-paragraph)
 
               (when clip2org-include-date
                 (org-set-property "DATE"
