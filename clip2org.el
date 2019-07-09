@@ -233,7 +233,10 @@ Returns nil if there is no data for last run."
   "Parse datetime for a clipping. The format is like this:
 - Monday, July 8, 2019 11:15:29 PM
 - Tuesday, July 9, 2019 6:48:34 AM"
-  (org-read-date t t datetime))
+  (let ((parsed-datetime (parse-time-string datetime)))
+    (if (string-match "PM$" datetime)
+      (setf (nth 2 parsed-datetime) (+ (nth 2 parsed-datetime) 12)))
+    (encode-time parsed-datetime)))
 
 (defun clip2org (&optional all clipping-file)
   "Parse clippings and convert to org headlines.
