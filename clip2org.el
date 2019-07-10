@@ -132,8 +132,9 @@ clip2org-include-pdf-folder."
     (delete-region (point-min) (point-max))
     (org-mode)
 
-    (let ((last-run (and (not all)
-                         (clip2org--get-last-run-timestamp))))
+    (let (clip2org--clock-in-time
+           (last-run (and (not all)
+                       (clip2org--get-last-run-timestamp))))
 
       (when last-run
         (setq last-run (apply 'encode-time (org-parse-time-string last-run))))
@@ -151,23 +152,45 @@ clip2org-include-pdf-folder."
           ;; Process each clipping
           (dolist (item note-list)
             (let ((page (cdr (assoc 'page item)))
+                  (type (cdr (assoc 'type item)))
                   (loc (cdr (assoc 'loc item)))
                   (date (cdr (assoc 'date item)))
                   (content (cdr (assoc 'content item))))
 
-              (insert "\n- " content)
-              (fill-paragraph)
+              (cond
+                ((string-equal "Bookmark" type)
+                  (progn
+                    (if clip2org--clock-in-time
+                      (progn
+                        (insert "\n")
+                        (insert (format "%s--%s"
+                                  (format-time-string "[%Y-%m-%d %a %H:%M]" (clip2org--parse-datetime clip2org--clock-in-time))
+                                  (format-time-string "[%Y-%m-%d %a %H:%M]" (clip2org--parse-datetime date))))
+                        (setq clip2org--clock-in-time nil))
+                      (setq clip2org--clock-in-time date))))
+                (t
+                  (progn
+                    (insert "\n- " content)
+                    (fill-paragraph)
 
-              (when clip2org-clipping-tags
-                (org-set-tags-to clip2org-clipping-tags))
+                    (when clip2org-clipping-tags
+                      (org-set-tags-to clip2org-clipping-tags))
 
-              ;; Insert pdf link
-              (if (and clip2org-include-pdf-links page)
-                  (insert (concat "[[docview:" clip2org-include-pdf-folder
-                                  (caar clist) ".pdf"
-                                  "::" page "][View Page]]\n")))))))))
+                    ;; Insert pdf link
+                    (if (and clip2org-include-pdf-links page)
+                      (insert (concat "[[docview:" clip2org-include-pdf-folder
+                                (caar clist) ".pdf"
+                                "::" page "][View Page]]\n"))))))))
 
-  (switch-to-buffer "*clippings*"))
+          (if clip2org--clock-in-time
+            (progn
+              (insert "\n")
+              (insert (format "%s--"
+                        (format-time-string "[%Y-%m-%d %a %H:%M]" (clip2org--parse-datetime clip2org--clock-in-time))))
+              (setq clip2org--clock-in-time nil)))))))
+
+  (switch-to-buffer "*clippings*")
+  (+org-clock-cleanup))
 
 (defun clip2org-append-to-alist-key (key value alist)
   "Append a value to the key part of an alist. This function is
