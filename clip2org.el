@@ -75,11 +75,6 @@ clip2org-include-pdf-folder."
   :type 'boolean
   :group 'clip2org)
 
-(defcustom clip2org-skip-bookmarks t
-  "If t, Bookmarks are ignored from the clippings file."
-  :type 'boolean
-  :group 'clip2org)
-
 (defcustom clip2org-clipping-tags nil
   "When non-nil the string is used as a tag for clippings."
   :type 'string
@@ -220,13 +215,9 @@ Returns nil if there is no data for last run."
 
 (defun clip2org--skip-clip (clip &optional last-run-ts)
   "Return t if the clip should be skipped from the org tree"
-
-  (or (and clip2org-skip-bookmarks
-           (clip2org--is-bookmark clip))
-
-      (and last-run-ts (time-less-p
-                        (clip2org--parse-datetime (cdr (assoc 'date clip)))
-                        last-run-ts))))
+  (and last-run-ts (time-less-p
+                     (clip2org--parse-datetime (cdr (assoc 'date clip)))
+                     last-run-ts)))
 
 (defun clip2org--parse-datetime (datetime)
   "Parse datetime for a clipping. The format is like this:
