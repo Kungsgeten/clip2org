@@ -100,8 +100,8 @@ clip2org-include-pdf-folder."
       (setq title (buffer-substring-no-properties
                    (line-beginning-position)
                    (line-end-position)))
-      (when (re-search-forward "Highlight" end t 1)
-        (setq is-highlight t))
+      (when (re-search-forward "- Your \\(\\w+\\)" end t 1)
+        (setq type (match-string 1)))
       (beginning-of-line)
       (when (re-search-forward "- \\(.*\\)|" end t 1)
         (setq header (match-string 1)))
@@ -124,7 +124,7 @@ clip2org-include-pdf-folder."
 
       ;; Return assoc list
       `((title . ,title)
-        (is-highlight . ,is-highlight)
+        (type . ,type)
         (page . ,page)
         (loc . ,loc)
         (date . ,date)
@@ -155,8 +155,7 @@ clip2org-include-pdf-folder."
 
           ;; Process each clipping
           (dolist (item note-list)
-            (let ((is-highlight (cdr (assoc 'is-highlight item)))
-                  (page (cdr (assoc 'page item)))
+            (let ((page (cdr (assoc 'page item)))
                   (loc (cdr (assoc 'loc item)))
                   (date (cdr (assoc 'date item)))
                   (content (cdr (assoc 'content item))))
@@ -201,7 +200,7 @@ to the list"
 (defun clip2org--is-bookmark (booklist)
   "Returns t if is-highlight is false"
   ;FIXME: not is-highlight may mean a note as well? not just a bookmark?
-  (not (cdr (assoc 'is-highlight booklist))))
+  (string-equal "Bookmark" (cdr (assoc 'type booklist))))
 
 (defun clip2org--save-last-run-timestamp (&optional timestamp)
   "Save the timestamp to last-run file."
