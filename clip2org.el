@@ -247,7 +247,9 @@ Returns nil if there is no data for last run."
 - Monday, July 8, 2019 11:15:29 PM
 - Tuesday, July 9, 2019 6:48:34 AM"
   (let ((parsed-datetime (parse-time-string datetime)))
-    (if (string-match "PM$" datetime)
+    (if (and
+          (< (nth 2 parsed-datetime) 12)
+          (string-match "PM$" datetime))
       (setf (nth 2 parsed-datetime) (+ (nth 2 parsed-datetime) 12)))
     (encode-time parsed-datetime)))
 
