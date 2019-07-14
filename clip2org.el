@@ -251,6 +251,10 @@ Returns nil if there is no data for last run."
           (< (nth 2 parsed-datetime) 12)
           (string-match "PM$" datetime))
       (setf (nth 2 parsed-datetime) (+ (nth 2 parsed-datetime) 12)))
+    (if (and
+          (eq (nth 2 parsed-datetime) 12)
+          (string-match "AM$" datetime))
+      (setf (nth 2 parsed-datetime) 0))
     (encode-time parsed-datetime)))
 
 (defun clip2org (&optional all clipping-file)
