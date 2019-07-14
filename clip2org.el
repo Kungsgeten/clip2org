@@ -247,14 +247,16 @@ Returns nil if there is no data for last run."
 - Monday, July 8, 2019 11:15:29 PM
 - Tuesday, July 9, 2019 6:48:34 AM"
   (let ((parsed-datetime (parse-time-string datetime)))
-    (if (and
-          (< (nth 2 parsed-datetime) 12)
-          (string-match "PM$" datetime))
-      (setf (nth 2 parsed-datetime) (+ (nth 2 parsed-datetime) 12)))
-    (if (and
-          (eq (nth 2 parsed-datetime) 12)
-          (string-match "AM$" datetime))
-      (setf (nth 2 parsed-datetime) 0))
+    (setf (nth 2 parsed-datetime)
+      (cond
+        ((and (< (nth 2 parsed-datetime) 12) (string-match "PM$" datetime))
+          (+ (nth 2 parsed-datetime) 12))
+
+        ((and (eq (nth 2 parsed-datetime) 12) (string-match "AM$" datetime))
+          0)
+
+        (t
+          (nth 2 parsed-datetime))))
     (encode-time parsed-datetime)))
 
 (defun clip2org (&optional all clipping-file)
