@@ -249,10 +249,10 @@ Returns nil if there is no data for last run."
         (hour (nth 2 parsed-datetime)))
     (setf (nth 2 parsed-datetime)
       (cond
-        ((and (< hour 12) (string-match "PM$" datetime))
+        ((and (< hour 12) (string-match "PM" datetime))
           (+ hour 12))
 
-        ((and (eq hour 12) (string-match "AM$" datetime))
+        ((and (eq hour 12) (string-match "AM" datetime))
           0)
 
         (t
