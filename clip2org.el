@@ -171,7 +171,6 @@ clip2org-include-pdf-folder."
                 (t
                   (progn
                     (insert "\n- " content)
-                    (fill-paragraph)
 
                     (when clip2org-clipping-tags
                       (org-set-tags-to clip2org-clipping-tags))
