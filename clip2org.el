@@ -142,7 +142,7 @@ clip2org-include-pdf-folder."
       ;; Process each book
       (dolist (book clist)
         (let ((note-list
-               (remove-if
+               (cl-remove-if
                 '(lambda (x) (clip2org--skip-clip x last-run))
                 (cdr book))))
 
