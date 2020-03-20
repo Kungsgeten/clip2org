@@ -237,9 +237,11 @@ Returns nil if there is no data for last run."
 
 (defun clip2org--skip-clip (clip &optional last-run-ts)
   "Return t if the clip should be skipped from the org tree"
-  (and last-run-ts (time-less-p
-                     (clip2org--parse-datetime (cdr (assoc 'date clip)))
-                     last-run-ts)))
+  (and last-run-ts
+       (cdr (assoc 'date clip))
+       (time-less-p
+        (clip2org--parse-datetime (cdr (assoc 'date clip)))
+        last-run-ts)))
 
 (defun clip2org--parse-datetime (datetime)
   "Parse datetime for a clipping. The format is like this:
