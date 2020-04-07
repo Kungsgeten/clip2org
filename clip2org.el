@@ -87,7 +87,7 @@ clip2org-include-pdf-folder."
   :group 'clip2org)
 
 (defun clip2org-get-next-book-as-list ()
-  (let (title is-highlight header loc date page start end content)
+  (let (title type header loc date page start end content)
     (setq start (point))
     (when (re-search-forward "==========" nil t 1)
       (setq end (point))
@@ -113,7 +113,7 @@ clip2org-include-pdf-folder."
            "\n\\(.*?\\)\n==========" end t 1)
           (setq content (match-string 1)))
       (when (equal title "==========")
-        (error "Clip2org: failed in getting content or quoted text."))
+        (error "Clip2org: failed in getting content or quoted text"))
       (message (format "Clip2org: now processing \"%s\"" title))
       (forward-line)
 
@@ -132,12 +132,10 @@ clip2org-include-pdf-folder."
     (delete-region (point-min) (point-max))
     (org-mode)
 
-    (let (clip2org--clock-in-time
-           (last-run (and (not all)
-                       (clip2org--get-last-run-timestamp))))
-
+    (let ((last-run (and (not all)
+                         (clip2org--get-last-run-timestamp))))
       (when last-run
-        (setq last-run (apply 'encode-time (org-parse-time-string last-run))))
+        (setq last-run (apply #'encode-time (org-parse-time-string last-run))))
 
       ;; Process each book
       (dolist (book clist)
@@ -151,45 +149,37 @@ clip2org-include-pdf-folder."
 
           ;; Process each clipping
           (dolist (item note-list)
-            (let ((page (cdr (assoc 'page item)))
-                  (type (cdr (assoc 'type item)))
-                  (loc (cdr (assoc 'loc item)))
-                  (date (cdr (assoc 'date item)))
-                  (content (cdr (assoc 'content item))))
+            (let ((page (alist-get 'page item))
+                  (type (alist-get 'type item))
+                  (loc (alist-get 'loc item))
+                  (date (alist-get 'date item))
+                  (content (alist-get 'content item)))
 
               (cond
-                ((string-equal "Bookmark" type)
-                  (progn
-                    (if clip2org--clock-in-time
-                      (progn
-                        (insert "\n")
-                        (insert (format "%s--%s"
-                                  (format-time-string "[%Y-%m-%d %a %H:%M]" (clip2org--parse-datetime clip2org--clock-in-time))
-                                  (format-time-string "[%Y-%m-%d %a %H:%M]" (clip2org--parse-datetime date))))
-                        (setq clip2org--clock-in-time nil))
-                      (setq clip2org--clock-in-time date))))
-                (t
-                  (progn
-                    (insert "\n- " content)
-
-                    (when clip2org-clipping-tags
-                      (org-set-tags-to clip2org-clipping-tags))
-
-                    ;; Insert pdf link
-                    (if (and clip2org-include-pdf-links page)
+               ((string-equal "Highlight" type)
+                (progn
+                  (insert "\n**")
+                  (when page
+                    (insert " Page " page))
+                  (when loc
+                    (insert " Loc. " loc))
+                  (when clip2org-include-date
+                    (insert " ")
+                    (org-insert-time-stamp (clip2org--parse-datetime date) nil t))
+                  (insert "\n")
+                  (when clip2org-clipping-tags
+                    (org-set-tags-to clip2org-clipping-tags))
+                  (insert (format "#+BEGIN_QUOTE\n%s\n#+END_QUOTE\n" content))
+                  ;; Insert pdf link
+                  (if (and clip2org-include-pdf-links page)
                       (insert (concat "[[docview:" clip2org-include-pdf-folder
-                                (caar clist) ".pdf"
-                                "::" page "][View Page]]\n"))))))))
-
-          (if clip2org--clock-in-time
-            (progn
-              (insert "\n")
-              (insert (format "%s--"
-                        (format-time-string "[%Y-%m-%d %a %H:%M]" (clip2org--parse-datetime clip2org--clock-in-time))))
-              (setq clip2org--clock-in-time nil)))))))
-
-  (switch-to-buffer "*clippings*")
-  (+org-clock-cleanup))
+                                      (caar clist) ".pdf"
+                                      "::" page "][View Page]]\n")))))
+               ((string-equal "Note" type)
+                (progn
+                  (insert "\n" content "\n")))
+               (t nil))))))))
+  (switch-to-buffer "*clippings*"))
 
 (defun clip2org-append-to-alist-key (key value alist)
   "Append a value to the key part of an alist. This function is
@@ -213,11 +203,6 @@ to the list"
     (if (not (eq found t))
         (setq results (append (list (list key value)) results)))
     results))
-
-(defun clip2org--is-bookmark (booklist)
-  "Returns t if is-highlight is false"
-  ;FIXME: not is-highlight may mean a note as well? not just a bookmark?
-  (string-equal "Bookmark" (cdr (assoc 'type booklist))))
 
 (defun clip2org--save-last-run-timestamp (&optional timestamp)
   "Save the timestamp to last-run file."
@@ -248,18 +233,16 @@ Returns nil if there is no data for last run."
 - Monday, July 8, 2019 11:15:29 PM
 - Tuesday, July 9, 2019 6:48:34 AM"
   (let* ((parsed-datetime (parse-time-string datetime))
-        (hour (nth 2 parsed-datetime)))
+         (hour (nth 2 parsed-datetime)))
     (setf (nth 2 parsed-datetime)
-      (cond
-        ((and (< hour 12) (string-match "PM" datetime))
-          (+ hour 12))
-
-        ((and (eq hour 12) (string-match "AM" datetime))
-          0)
-
-        (t
-          hour)))
-    (encode-time parsed-datetime)))
+          (cond
+           ((and (< hour 12) (string-match "PM" datetime))
+            (+ hour 12))
+           ((and (eq hour 12) (string-match "AM" datetime))
+            0)
+           (t
+            hour)))
+    (apply #'encode-time parsed-datetime)))
 
 (defun clip2org (&optional all clipping-file)
   "Parse clippings and convert to org headlines.
@@ -269,12 +252,11 @@ time this command was run.  If ALL is non-nil, converts all the
 clippings.  The last run timestamp is updated only if ALL is nil.
 
 CLIPPING-FILE is a path to the clipping file. If none is
-provided, the `clip2org-clippings-file' value is used.
-"
+provided, the `clip2org-clippings-file' value is used."
   (interactive "P")
   (save-excursion
     (with-temp-buffer
-      (insert-file (or clipping-file clip2org-clippings-file))
+      (insert-file-contents (or clipping-file clip2org-clippings-file))
       (goto-char (point-min))
       (let (clist (booklist (clip2org-get-next-book-as-list)))
         (while booklist
@@ -288,6 +270,5 @@ provided, the `clip2org-clippings-file' value is used.
   (unless all
     (clip2org--save-last-run-timestamp)))
 
-
 (provide 'clip2org)
-;;; clip2org.el ends here.
+;;; clip2org.el ends here
