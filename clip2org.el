@@ -149,12 +149,11 @@ clip2org-include-pdf-folder."
 
           ;; Process each clipping
           (dolist (item note-list)
-            (let ((page (alist-get 'page item))
-                  (type (alist-get 'type item))
+            (let ((type (alist-get 'type item))
+                  (page (alist-get 'page item))
                   (loc (alist-get 'loc item))
                   (date (alist-get 'date item))
                   (content (alist-get 'content item)))
-
               (cond
                ((string-equal "Highlight" type)
                 (progn
@@ -176,8 +175,7 @@ clip2org-include-pdf-folder."
                                       (caar clist) ".pdf"
                                       "::" page "][View Page]]\n")))))
                ((string-equal "Note" type)
-                (progn
-                  (insert "\n" content "\n")))
+                (insert "\n" content "\n"))
                (t nil))))))))
   (switch-to-buffer "*clippings*"))
 
